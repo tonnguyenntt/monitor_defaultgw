@@ -4,7 +4,7 @@ After=network.service squid.service
 
 [Service]
 Type = simple
-ExecStart = /usr/local/sbin/monitor_defaultgw.sh
+ExecStart = /usr/local/sbin/monitor_defaultgw.sh /usr/local/etc/monitor_defaultgw.conf
 Restart = always
 
 [Install]
