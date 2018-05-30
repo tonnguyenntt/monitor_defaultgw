@@ -3,8 +3,6 @@
 PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin"
 
 logfile="/var/log/monitor-defaultgw.log"
-exec &> >(tee -a "$logfile")
-
 host=$(hostname -f)
 
 SOURCE_IP=10.22.140.15
@@ -24,6 +22,7 @@ function currentGW
   echo $current_gw
 }
 
+
 function checkGW2Internet
 {
   sum_fail=0 
@@ -36,6 +35,7 @@ function checkGW2Internet
   test "$sum_fail" -gt 10 && echo 1 || echo 0
 }
 
+
 function switchGW
 {
   gw_old=$1
@@ -45,6 +45,8 @@ function switchGW
   route add default gw $gw_new &> /dev/null
 }
 
+
+exec &> >(tee -a "$logfile")
 while true
 do
   echo "Date time: $(date)"
