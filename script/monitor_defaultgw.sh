@@ -5,17 +5,6 @@ PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin"
 logfile="/var/log/monitor-defaultgw.log"
 host=$(hostname -f)
 
-SOURCE_IP=10.22.140.15
-DEST_IP=8.8.8.8
-
-ADNFWVN01_IP=10.22.140.2
-ADNFWVN01_MAC=f8:c2:88:1b:82:9e
-ADNFWVN01_ISP="VNPT"
-
-ADNFWVN02_IP=10.22.140.4
-ADNFWVN02_MAC=60:73:5c:98:78:b5
-ADNFWVN02_ISP="Viettel"
-
 function currentGW
 {
   current_gw=$(ip route | head -n1 | grep -Po 'default\ via\ \K[0-9]{1,3}(.[0-9]{1,3}){3}')
@@ -46,6 +35,14 @@ function switchGW
 }
 
 
+if [ ! -f "$1" ]
+then
+  echo "Please provide a valid conf file for input!"
+  exit 1
+else
+  source "$1"
+fi
+
 test -f $logfile && cat /dev/null > $logfile || touch $logfile
 exec &> >(tee -a "$logfile")
 while true
@@ -54,23 +51,23 @@ do
   echo "Host: $host"
 
   current_gw=$(currentGW)
-  status_viettel=$(checkGW2Internet "$ADNFWVN02_MAC")
-  status_vnpt=$(checkGW2Internet "$ADNFWVN01_MAC")
+  gw01_toInternet=$(checkGW2Internet "$GW01_MAC")
+  gw02_toInternet=$(checkGW2Internet "$GW02_MAC")
 
-  if [ $status_viettel == 0 ] && [ "$current_gw" ==  "$ADNFWVN02_IP" ]
+  if [ $gw01_toInternet == 0 ] && [ "$current_gw" ==  "$GW01_IP" ]
   then
-    echo "Status: Gateway is STILL to $ADNFWVN02_ISP(primary)"
+    echo "Status: Gateway is STILL to $GW01_ISP(primary)"
     echo "Current GW: $current_gw"
-  elif [ $status_viettel == 1 ] && [ $status_vnpt == 0 ] && [ "$current_gw" != "$ADNFWVN01_IP" ]
+  elif [ $gw01_toInternet == 1 ] && [ $gw02_toInternet == 0 ] && [ "$current_gw" != "$GW02_IP" ]
   then
-    switchGW "$ADNFWVN02_IP" "$ADNFWVN01_IP"
-    echo "Status: Gateway is SWITCHED to $ADNFWVN01_ISP(secondary)"
-    echo "Reason: $ADNFWVN02_ISP is down!"
+    switchGW "$GW01_IP" "$GW02_IP"
+    echo "Status: Gateway is SWITCHED to $GW02_ISP(secondary)"
+    echo "Reason: $GW01_ISP is down!"
     echo "Current GW: $(currentGW)"
-  elif [ $status_viettel == 0 ] && [ "$current_gw" != "$ADNFWVN02_IP" ]
+  elif [ $gw01_toInternet == 0 ] && [ "$current_gw" != "$GW01_IP" ]
   then
-    switchGW "$ADNFWVN01_IP" "$ADNFWVN02_IP"
-    echo "Status: Gateway is now BACK to $ADNFWVN02_ISP(primary)"
+    switchGW "$GW02_IP" "$GW01_IP"
+    echo "Status: Gateway is now BACK to $GW01_ISP(primary)"
     echo "Current GW: $(currentGW)"
   else
     echo "Status: Please check the previous message!!!"
