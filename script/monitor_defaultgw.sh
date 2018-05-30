@@ -46,6 +46,7 @@ function switchGW
 }
 
 
+test -f $logfile && cat /dev/null > $logfile || touch $logfile
 exec &> >(tee -a "$logfile")
 while true
 do
