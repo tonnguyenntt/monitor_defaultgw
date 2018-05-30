@@ -1,0 +1,11 @@
+[Unit]
+Description=Mornitoring default GW for Internet access
+After=network.service squid.service
+
+[Service]
+Type = simple
+ExecStart = /usr/local/sbin/monitor_defaultgw.sh
+Restart = always
+
+[Install]
+WantedBy=multi-user.target
