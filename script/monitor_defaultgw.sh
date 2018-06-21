@@ -14,14 +14,15 @@ function currentGW
 
 function checkGW2Internet
 {
-  sum_fail=0 
-  for i in {1..2}
-  do 
-    nping_result=$(nping -q --icmp --count 10 --source-ip $SOURCE_IP --dest-mac $1 $DEST_IP | grep -Po 'Lost:\ \K[0-9]{1,2}')
-    sum_fail=$((sum_fail + nping_result))
-    sleep 3
+  fail_sum=0
+  for i in $(seq "$CHECK_NUM")
+  do
+    nping_result=$(nping $NPING_PROBE --count $NPING_COUNT --source-ip $SOURCE_IP --dest-mac $1 $DEST_IP)
+    fail_sum=$((fail_sum + $(grep -oi 'unreachable' <<< $nping_result | wc -l)))
+    fail_sum=$((fail_sum + $(grep -Po 'Lost:\ \K[0-9]{1,2}' <<< $nping_result)))
+    sleep $CHECK_INTERVAL
   done
-  test "$sum_fail" -gt 10 && echo 1 || echo 0
+  test "$fail_sum" -gt $((CHECK_NUM * NPING_COUNT / 2)) && echo 1 || echo 0
 }
 
 
